@@ -15,7 +15,13 @@ export default function Header() {
   const { currentUser } = useSelector((state) => state.user);
   const { theme } = useSelector((state) => state.theme);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isOpen, setIsOpen] = useState(true);
+ 
 
+  
+  const handleProfileRedirect = () => {
+    navigate("/dashboard?tab=profile");
+  };
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const searchTermFromUrl = urlParams.get("searchTerm");
@@ -26,7 +32,7 @@ export default function Header() {
 
   const handleSignout = async () => {
     try {
-      const res = await fetch("/api/user/signout", {
+      const res = await fetch("http://localhost:3000/api/user/signout", {
         method: "POST",
       });
       const data = await res.json();
@@ -80,25 +86,27 @@ export default function Header() {
           {theme === "light" ? <FaSun /> : <FaMoon />}
         </Button>
         {currentUser ? (
-          <Dropdown
-            arrowIcon={false}
-            inline
-            label={
-              <Avatar alt="user" img={currentUser.profilePicture} rounded />
-            }
-          >
-            <Dropdown.Header>
-              <span className="block text-sm">@{currentUser.username}</span>
-              <span className="block text-sm font-medium truncate">
-                {currentUser.email}
-              </span>
-            </Dropdown.Header>
-            <Link to={"/dashboard?tab=profile"}>
-              <Dropdown.Item>Profile</Dropdown.Item>
-            </Link>
-            <Dropdown.Divider />
-            <Dropdown.Item onClick={handleSignout}>Sign out</Dropdown.Item>
-          </Dropdown>
+          <div className="hidden md:block">
+            <Dropdown
+              arrowIcon={false}
+              inline
+              label={
+                <Avatar alt="user" img={currentUser.profilePicture} rounded />
+              }
+            >
+              <Dropdown.Header>
+                <span className="block text-sm">@{currentUser.username}</span>
+                <span className="block text-sm font-medium truncate">
+                  {currentUser.email}
+                </span>
+              </Dropdown.Header>
+              <Link to={"/dashboard?tab=profile"}>
+                <Dropdown.Item>Profile</Dropdown.Item>
+              </Link>
+              <Dropdown.Divider />
+              <Dropdown.Item onClick={handleSignout}>Sign out</Dropdown.Item>
+            </Dropdown>
+          </div>
         ) : (
           <Link to="/sign-in" className=" hidden lg:inline">
             <Button gradientDuoTone="purpleToBlue" outline>
@@ -108,21 +116,72 @@ export default function Header() {
         )}
         <Navbar.Toggle />
       </div>
-      <Navbar.Collapse className="">
-        <Navbar.Link active={path === "/"} as={"div"} className="mt-2">
-          <Link to="/">Home</Link>
-        </Navbar.Link>
-        <Navbar.Link active={path === "/about"} as={"div"} className="mt-2">
-          <Link to="/about">About</Link>
-        </Navbar.Link>
-        <Navbar.Link active={path === "/projects"} as={"div"} className="mt-2">
-          <Link to="/projects">Projects</Link>
-        </Navbar.Link>
-        <Navbar.Link to="/sign-in" className="lg:hidden ">
-          <Button gradientDuoTone="purpleToBlue" outline>
-            Sign In
-          </Button>
-        </Navbar.Link>
+
+
+     <Navbar.Collapse>
+  {[
+    { path: "/", label: "Home" },
+    { path: "/about", label: "About" },
+    { path: "/projects", label: "Projects" },
+  ].map((link) => {
+    const isActive = path === link.path;
+
+    return (
+      <Navbar.Link
+        key={link.path}
+        as="div"
+         
+        className={`mt-2 px-3 py-1 rounded ${
+          theme === "light"
+            ? isActive
+              ? "text-purple-700  font-semibold"
+              : "text-gray-700 hover:text-blue-600 hover:bg-gray-100 transition-colors"
+            : isActive
+            ? "text-purple-100 font-semibold"
+            : "text-gray-300 hover:text-purple-300 hover:bg-gray-700 transition-colors"
+        }`}
+       
+      >
+        <Link to={link.path}>{link.label}</Link>
+      </Navbar.Link>
+    );
+  })}
+
+
+
+        {currentUser ? (
+          <div className="lg:hidden mt-2 flex items-center justify-between w-full px-2">
+            <div
+              className="flex items-center gap-2 cursor-pointer"
+              onClick={handleProfileRedirect}
+            >
+              <Avatar
+                alt={currentUser.username}
+                img={currentUser.profilePicture || "/default-avatar.png"}
+                rounded
+                size="sm"
+              />
+              <span>{currentUser.username}</span>
+            </div>
+
+            <Button
+              gradientDuoTone="purpleToBlue"
+              outline
+              onClick={handleSignout}
+              size="sm"
+            >
+              Sign Out
+            </Button>
+          </div>
+        ) : (
+          <Navbar.Link className="lg:hidden mt-2">
+            <Link to="/sign-in">
+              <Button gradientDuoTone="purpleToBlue" outline>
+                Sign In
+              </Button>
+            </Link>
+          </Navbar.Link>
+        )}
       </Navbar.Collapse>
     </Navbar>
   );
