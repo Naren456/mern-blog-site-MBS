@@ -6,6 +6,35 @@ export const test = (req, res) => {
   res.json({ message: 'API is working!' });
 };
 
+export const changePassword = async (req, res, next) => {
+  const userId = req.user.id;
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return next(errorHandler(400, 'All fields are required'));
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return next(errorHandler(404, 'User not found'));
+
+    const isMatch = bcryptjs.compareSync(currentPassword, user.password);
+    if (!isMatch) return next(errorHandler(400, 'Current password is incorrect'));
+
+    if (newPassword.length < 6) {
+      return next(errorHandler(400, 'Password must be at least 6 characters'));
+    }
+
+    user.password = bcryptjs.hashSync(newPassword, 10);
+    await user.save();
+
+    res.status(200).json({ success: true, message: 'Password changed successfully' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 export const updateUser = async (req, res, next) => {
   if (req.user.id !== req.params.userId) {
     return next(errorHandler(403, 'You are not allowed to update this user'));
